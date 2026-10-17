@@ -5,7 +5,6 @@ python -m venv .venv || (echo Python 3.11+ est requis : https://www.python.org/d
 call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-if not exist .env copy .env.example .env
 echo.
-echo Installation terminee. Ouvre le fichier .env et colle ta cle API, puis lance lancer_jarvis.bat
+echo Installation terminee. Connecte ton abonnement Claude (voir README, etape 4), puis lance lancer_jarvis.bat
 pause

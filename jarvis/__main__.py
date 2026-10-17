@@ -28,7 +28,13 @@ def main() -> None:
     config = charger_config()
     voix = Voix(config, muet=args.muet)
     oreille = Clavier() if args.texte else Oreille(config)
-    cerveau = Cerveau(config, Actions(config, voix, oreille))
+    actions = Actions(config, voix, oreille)
+    if config["cerveau"].get("fournisseur", "api") == "abonnement":
+        from .cerveau_abonnement import CerveauAbonnement
+
+        cerveau = CerveauAbonnement(config, actions)
+    else:
+        cerveau = Cerveau(config, actions)
     detecteur = DetecteurPrenom(config)
     reveil = None
     if not args.texte and config["ecoute"].get("mode_reveil") == "hors_ligne":

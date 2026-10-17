@@ -17,10 +17,16 @@ secondes_de_suivi = 8
 minutes_avant_oubli = 10
 
 [cerveau]
+# Comment Jarvis accède à Claude :
+#  - "abonnement" : via Claude Code installé sur ce PC, avec ton abonnement Claude
+#                   (Pro / Max). Pas de clé API, rien à payer en plus, mais ça
+#                   consomme tes quotas Claude Code et ajoute 2-5 s par réponse.
+#  - "api"        : via une clé API (fichier .env), facturée à l'usage. Plus rapide.
+fournisseur = "abonnement"
 # Modèle Claude utilisé.
-#  - "claude-opus-5-5"  : le plus intelligent (~1 à 2 centimes par commande)
-#  - "claude-haiku-5-5" : environ 40 fois moins cher, largement suffisant
-#                         pour ouvrir des applis / envoyer des messages
+#  - "claude-opus-5-5"  : le plus intelligent (en mode "api" : ~1 à 2 centimes par commande)
+#  - "claude-haiku-5-5" : bien plus rapide, consomme moins de quota (et ~40 fois
+#                         moins cher en mode "api") ; suffisant pour des commandes
 modele = "claude-opus-5-5"
 # "low" = réponses rapides et économiques. "medium" ou "high" = plus réfléchi.
 effort = "low"

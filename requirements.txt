@@ -1,4 +1,5 @@
 anthropic>=1.15
+claude-agent-sdk>=0.2
 python-dotenv>=1.0
 SpeechRecognition>=3.10
 PyAudio>=0.2.14

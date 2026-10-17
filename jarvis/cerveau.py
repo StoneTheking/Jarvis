@@ -1,6 +1,7 @@
-"""Le cerveau de Jarvis : Claude, avec les actions de actions.py comme outils."""
+"""Le cerveau de Jarvis : Claude via une clé API, avec les actions de actions.py comme outils."""
 
 import json
+import platform
 import time
 
 import anthropic
@@ -12,7 +13,7 @@ efficace, poli, avec une pointe d'humour britannique. Tu tournes sur son ordinat
 
 Tout ce que tu écris est lu à voix haute :
 - Réponds en français, en une à trois phrases courtes, comme à l'oral.
-- Jamais de markdown, de listes, d'émojis, d'URL ni de code.
+- Jamais de markdown, de listes, d'émojis, d'URL ni de code. Ne cite pas tes sources.
 - Quand tu as fait une action, confirme-la en quelques mots (« C'est fait, Discord est ouvert. »).
 
 Ce que tu entends vient d'une reconnaissance vocale : il peut y avoir des fautes \
@@ -34,13 +35,7 @@ class Cerveau:
         self.effort = c["effort"]
         self.oubli = config["general"]["minutes_avant_oubli"] * 60
         self.outils = OUTILS + ([RECHERCHE_WEB] if c.get("recherche_web") else [])
-        self.consignes = CONSIGNES.format(
-            nom=config["general"]["nom_utilisateur"],
-            systeme=__import__("platform").system(),
-            applis=", ".join(config["applications"]) or "aucune",
-            sites=", ".join(config["sites"]) or "aucun",
-            contacts=", ".join(config["discord"]["contacts"]) or "aucun",
-        )
+        self.consignes = consignes(config)
         self.messages: list = []
         self.dernier_echange = 0.0
 
@@ -93,6 +88,16 @@ class Cerveau:
         if not self.modele.startswith("claude-haiku"):
             parametres.update(betas=["server-side-fallback-2026-07-01"], fallbacks="default")
         return self.client.beta.messages.create(**parametres)
+
+
+def consignes(config: dict) -> str:
+    return CONSIGNES.format(
+        nom=config["general"]["nom_utilisateur"],
+        systeme=platform.system(),
+        applis=", ".join(config["applications"]) or "aucune",
+        sites=", ".join(config["sites"]) or "aucun",
+        contacts=", ".join(config["discord"]["contacts"]) or "aucun",
+    )
 
 
 def _texte(reponse) -> str:

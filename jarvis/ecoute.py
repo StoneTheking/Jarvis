@@ -3,39 +3,86 @@
 import re
 
 
+# Phrases que Whisper « invente » parfois sur du bruit ou du silence.
+HALLUCINATIONS = re.compile(
+    r"sous-titr|amara|merci d'avoir regard|abonnez-vous|n'oubliez pas de|radio-canada|"
+    r"merci de votre attention|à bientôt pour une nouvelle vidéo",
+    re.I,
+)
+
+
 class Oreille:
-    """Transforme ce que tu dis en texte (reconnaissance vocale Google, gratuite)."""
+    """Transforme ce que tu dis en texte, avec Whisper (sur ton PC) ou Google (en ligne)."""
 
     def __init__(self, config: dict):
         import speech_recognition as sr
 
         self.sr = sr
-        self.langue = config["ecoute"]["langue"]
-        index = config["ecoute"]["index_micro"]
+        e = config["ecoute"]
+        self.langue = e["langue"]
+        self.moteur = e.get("moteur", "whisper")
+        index = e["index_micro"]
         self.micro = Micro(sr, None if index < 0 else index)
         self.reco = sr.Recognizer()
         self.reco.dynamic_energy_threshold = True
-        self.reco.pause_threshold = 0.8
-        print("🎙️  Calibrage du micro (silence 1 seconde)...")
+        self.reco.pause_threshold = 1.0  # silence qui marque la fin d'une phrase (secondes)
+        self.reco.non_speaking_duration = 0.4
+        if self.moteur == "whisper":
+            self._charger_whisper(e.get("modele_whisper", "small"), config)
+        print("🎙️  Calibrage du micro (reste silencieux 1 seconde)...")
         with self.micro as source:
             self.reco.adjust_for_ambient_noise(source, duration=1)
+        self.reco.energy_threshold *= e.get("sensibilite_micro", 1.0)
+
+    def _charger_whisper(self, modele: str, config: dict) -> None:
+        from faster_whisper import WhisperModel
+
+        print(f"🧠 Chargement de la reconnaissance vocale Whisper « {modele} » "
+              "(la première fois, téléchargement de quelques centaines de Mo)...")
+        self.whisper = WhisperModel(modele, device="cpu", compute_type="int8")
+        # Donner à Whisper le vocabulaire attendu l'aide énormément (noms propres surtout).
+        noms = list(config["applications"])[:12] + list(config["discord"]["contacts"])
+        prenom = config["general"]["mot_de_reveil"].capitalize()
+        self.vocabulaire = f"{prenom}. " + ", ".join(noms) + "."
 
     def ecouter(self, attente_max: float | None = None) -> str | None:
         """Renvoie la phrase entendue, ou None (silence / incompréhensible)."""
         with self.micro as source:
             try:
-                audio = self.reco.listen(source, timeout=attente_max, phrase_time_limit=20)
+                audio = self.reco.listen(source, timeout=attente_max, phrase_time_limit=15)
             except self.sr.WaitTimeoutError:
                 return None
+        texte = self._whisper(audio) if self.moteur == "whisper" else self._google(audio)
+        if texte:
+            print(f"🗣️  Toi : {texte}")
+        return texte or None
+
+    def _whisper(self, audio) -> str:
+        import numpy as np
+
+        echantillons = np.frombuffer(audio.get_raw_data(convert_rate=16000, convert_width=2), np.int16)
+        if len(echantillons) < 16000 * 0.4:  # moins de 0,4 s : un bruit, pas une phrase
+            return ""
+        segments, _ = self.whisper.transcribe(
+            echantillons.astype(np.float32) / 32768,
+            language=self.langue.split("-")[0],
+            initial_prompt=self.vocabulaire,
+            beam_size=5,
+            vad_filter=True,
+            condition_on_previous_text=False,
+        )
+        morceaux = [s.text for s in segments if s.no_speech_prob < 0.6 and s.avg_logprob > -1.0]
+        texte = " ".join(morceaux).strip()
+        return "" if HALLUCINATIONS.search(texte) else texte
+
+    def _google(self, audio) -> str:
         try:
-            texte = self.reco.recognize_google(audio, language=self.langue)
+            return self.reco.recognize_google(audio, language=self.langue)
         except self.sr.UnknownValueError:
-            return None
+            return ""
         except self.sr.RequestError as e:
             print(f"⚠️  Reconnaissance vocale indisponible : {e}")
-            return None
-        print(f"🗣️  Toi : {texte}")
-        return texte
+            return ""
 
 
 class Clavier:

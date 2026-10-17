@@ -11,5 +11,6 @@ pyautogui>=0.9.54
 pyperclip>=1.8
 psutil>=5.9
 pygetwindow>=0.0.9; sys_platform == "win32"
+faster-whisper>=1.1
 # Optionnel, pour mode_reveil = "hors_ligne" :
 # openwakeword>=0.6

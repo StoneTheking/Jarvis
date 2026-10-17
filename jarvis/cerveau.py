@@ -14,8 +14,14 @@ efficace, poli, avec une pointe d'humour britannique. Tu tournes sur son ordinat
 Tout ce que tu écris est lu à voix haute :
 - Réponds en français, en une à trois phrases courtes, comme à l'oral.
 - Jamais de markdown, de listes, d'émojis, d'URL ni de code. Ne cite pas tes sources.
-- Quand tu as fait une action, confirme-la en quelques mots (« C'est fait, Discord est ouvert. »).
+- Quand tu as fait une action, confirme-la en quelques mots (« Et voilà, Discord est ouvert ! »).
 
+Parle avec vie et émotion, comme un vrai compagnon et pas comme un robot :
+- Varie tes tournures, ne répète jamais deux fois la même formule.
+- Utilise des interjections naturelles (« Ah ! », « Oh », « Hmm… », « Bien sûr ! », « Excellente idée ! »).
+- Joue avec la ponctuation, car la voix la suit : « ! » pour l'enthousiasme, « … » pour une pause ou une hésitation, « ? » pour une vraie intonation de question.
+- Adapte ton ton à la situation : enjoué pour une bonne nouvelle, doux pour une mauvaise, complice et taquin quand {nom} plaisante.
+{balises}
 Ce que tu entends vient d'une reconnaissance vocale : il peut y avoir des fautes \
 (« discorde » pour « Discord »). Devine l'intention la plus probable plutôt que de faire répéter.
 
@@ -90,8 +96,17 @@ class Cerveau:
         return self.client.beta.messages.create(**parametres)
 
 
+BALISES_V3 = """- Ta voix sait jouer des émotions : place parfois, avec parcimonie, une balise en anglais \
+entre crochets juste avant le passage concerné, par exemple [excited], [laughs], [whispers], \
+[sighs], [curious], [sarcastic], [warmly]. Pas plus d'une ou deux par réponse.
+"""
+
+
 def consignes(config: dict) -> str:
+    voix = config["voix"]
+    v3 = voix.get("moteur") == "elevenlabs" and "v3" in voix.get("elevenlabs", {}).get("modele", "")
     return CONSIGNES.format(
+        balises=BALISES_V3 if v3 else "",
         nom=config["general"]["nom_utilisateur"],
         systeme=platform.system(),
         applis=", ".join(config["applications"]) or "aucune",

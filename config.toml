@@ -31,32 +31,73 @@ modele = "claude-opus-5-5"
 # "low" = réponses rapides et économiques. "medium" ou "high" = plus réfléchi.
 effort = "low"
 # Autorise Jarvis à chercher sur internet (météo, actualités...).
-# Coûte environ 1 centime par recherche.
+# (En mode "api", coûte environ 1 centime par recherche.)
 recherche_web = true
 
 [voix]
-# Voix Microsoft Edge (gratuite, nécessite internet). Autres voix françaises :
-# "fr-FR-DeniseNeural", "fr-FR-EloiseNeural", "fr-FR-RemyMultilingualNeural",
-# "fr-CA-AntoineNeural", "fr-BE-GerardNeural", "fr-CH-FabriceNeural"
-voix_edge = "fr-FR-HenriNeural"
-# Vitesse de parole, ex. "+10%" ou "-5%".
-vitesse = "+5%"
+# "edge"       : voix Microsoft gratuites (il faut internet).
+# "elevenlabs" : voix ultra expressives (rires, chuchotements, enthousiasme...).
+#                Compte gratuit sur https://elevenlabs.io (~10 000 caractères/mois),
+#                puis colle ta clé dans le fichier .env (ELEVENLABS_API_KEY=...).
+moteur = "edge"
+# Voix Edge. Les plus naturelles : "fr-FR-VivienneMultilingualNeural" (femme),
+# "fr-FR-RemyMultilingualNeural" (homme). Autres : "fr-FR-HenriNeural", "fr-FR-DeniseNeural"...
+voix_edge = "fr-FR-VivienneMultilingualNeural"
+# Vitesse ("+10%", "-5%"...) et hauteur ("+2Hz", "-3Hz"...) de la voix Edge.
+vitesse = "+8%"
+hauteur = "+2Hz"
+# Varie la mélodie de la voix Edge phrase par phrase (plus haute et vive sur un « ! »,
+# montante sur un « ? », plus lente sur un « … ») pour un ton plus vivant.
+intonations = true
+
+[voix.elevenlabs]
+# Identifiant de la voix (bibliothèque de voix sur elevenlabs.io → « ID »).
+# Par défaut « George », voix britannique chaleureuse très « Jarvis ».
+voix = "JBFqnCBsd6RMkjVDRZzb"
+# "eleven_v3" = le plus expressif (Jarvis y ajoute des émotions : [laughs], [whispers]...).
+# "eleven_flash_v2_5" = plus rapide et consomme 2 fois moins de crédits, moins expressif.
+modele = "eleven_v3"
 
 [ecoute]
+# Moteur de reconnaissance vocale :
+#  - "whisper" : tourne sur ton PC, comprend beaucoup mieux (surtout les noms
+#                propres), gratuit, mais utilise un peu ton processeur.
+#  - "google"  : en ligne, plus léger, mais se trompe plus souvent.
+moteur = "whisper"
+# Taille du modèle Whisper : "base" (rapide), "small" (bon compromis),
+# "medium" (le plus précis, mais nettement plus lent).
+modele_whisper = "small"
 # Comment Jarvis détecte qu'on l'appelle :
-#  - "google"     : tu dis juste « Jarvis, ... ». Ce que capte le micro est envoyé
-#                   à la reconnaissance vocale de Google en continu.
-#  - "hors_ligne" : tu dis « Hey Jarvis » ; la détection se fait sur ton PC et
-#                   rien ne part sur internet avant. (pip install openwakeword)
-mode_reveil = "google"
+#  - "normal"     : tu dis juste « Jarvis, ... ».
+#  - "hors_ligne" : tu dis « Hey Jarvis » ; détection ultra légère, pratique si
+#                   Jarvis se déclenche quand tu parles à d'autres gens.
+#                   (pip install openwakeword)
+mode_reveil = "normal"
 # Langue de la reconnaissance vocale.
 langue = "fr-FR"
 # Index du micro à utiliser (laisse -1 pour le micro par défaut).
-# Lance `python -m jarvis --micros` pour voir la liste.
+# Lance `lancer_jarvis.bat --micros` pour voir la liste.
 index_micro = -1
+# Augmente (1.5, 2...) si Jarvis réagit aux bruits de fond ; baisse (0.7...)
+# s'il ne t'entend pas bien.
+sensibilite_micro = 1.0
+
+[interface]
+# Petite bulle en bas de l'écran qui montre ce que fait Jarvis :
+# gris = en veille, bleu qui pulse = il t'écoute, orange = il réfléchit,
+# violet = il agit, vert = il parle. (Déplaçable à la souris, clic droit pour quitter.)
+bulle = true
+# Petits bips quand Jarvis commence (bip montant) et arrête (bip descendant) de t'écouter.
+sons = true
 
 [discord]
-# Demande une confirmation vocale ("Je l'envoie ?") avant d'envoyer un message.
+# Comment Jarvis envoie les messages :
+#  - "clavier" : il tape le message dans ton appli Discord, depuis TON compte, puis
+#                te rend la main (environ 3 secondes où il utilise ton clavier).
+#  - "bot"     : il passe par un bot Discord, 100 % en arrière-plan, mais le
+#                message vient du bot, pas de ton compte. Voir le README.
+methode = "clavier"
+# Demande une confirmation vocale ("C'est bon ?") avant d'envoyer un message.
 confirmer_avant_envoi = true
 # Secondes d'attente pour que Discord s'ouvre / passe au premier plan.
 delai_ouverture = 4
@@ -66,6 +107,11 @@ delai_ouverture = 4
 [discord.contacts]
 charles = "charles"
 # maman = "maman_du_75"
+
+# Pour la méthode "bot" uniquement : prénom -> identifiant Discord (un nombre).
+# (Discord → Paramètres → Avancés → Mode développeur, puis clic droit sur la personne → Copier l'identifiant)
+[discord.ids_bot]
+# charles = "123456789012345678"
 
 # Applications que Jarvis sait ouvrir : nom prononcé -> commande / lien.
 # Sous Windows, un lien comme "discord://" ou "spotify:" lance l'appli installée.

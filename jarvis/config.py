@@ -18,5 +18,6 @@ def charger_config(chemin: Path | None = None) -> dict:
     for section in ("applications", "sites"):
         config[section] = {k.lower(): v for k, v in config.get(section, {}).items()}
     discord = config.setdefault("discord", {})
-    discord["contacts"] = {k.lower(): v for k, v in discord.get("contacts", {}).items()}
+    for section in ("contacts", "ids_bot"):
+        discord[section] = {k.lower(): v for k, v in discord.get(section, {}).items()}
     return config

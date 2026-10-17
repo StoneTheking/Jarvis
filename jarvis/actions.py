@@ -112,17 +112,33 @@ OUTILS = [
 RECHERCHE_WEB = {"type": "web_search_20260209", "name": "web_search", "max_uses": 3}
 
 
+LIBELLES = {
+    "ouvrir_application": "Ouverture de {nom}",
+    "fermer_application": "Fermeture de {nom}",
+    "ouvrir_site": "Ouverture de {site}",
+    "rechercher_dans_navigateur": "Recherche : {requete}",
+    "envoyer_message_discord": "Message Discord pour {destinataire}",
+    "controle_multimedia": "Son / musique",
+    "date_et_heure": "Coup d'œil à l'horloge",
+}
+
+
 class Actions:
-    def __init__(self, config: dict, voix, oreille):
+    def __init__(self, config: dict, voix, oreille, interface):
         self.config = config
         self.voix = voix
         self.oreille = oreille
+        self.interface = interface
 
     def executer(self, nom: str, entree: dict) -> str:
         fonction = getattr(self, nom, None)
         if fonction is None or nom.startswith("_"):
             raise ValueError(f"Outil inconnu : {nom}")
-        return fonction(**entree)
+        self.interface.etat("action", LIBELLES.get(nom, nom).format(**entree))
+        try:
+            return fonction(**entree)
+        finally:
+            self.interface.etat("reflexion")
 
     # ------------------------------------------------------------------ applis
 
@@ -188,36 +204,19 @@ class Actions:
     # --------------------------------------------------------------- discord
 
     def envoyer_message_discord(self, destinataire: str, message: str) -> str:
-        import pyautogui
-
         reglages = self.config["discord"]
-        pseudo = reglages["contacts"].get(destinataire.lower().strip(), destinataire)
-
         if reglages.get("confirmer_avant_envoi", True):
             self.voix.dire(f"J'envoie à {destinataire} : « {message} ». C'est bon ?")
+            self.interface.bip(montant=True)
+            self.interface.etat("ecoute", "Oui pour envoyer, non pour annuler")
             reponse = self.oreille.ecouter(attente_max=7)
+            self.interface.bip(montant=False)
             if not reponse or NON.search(reponse) or not OUI.search(reponse):
                 return "Envoi annulé : l'utilisateur n'a pas confirmé."
-
-        _lancer("discord://")
-        time.sleep(reglages.get("delai_ouverture", 4))
-        _mettre_au_premier_plan("Discord")
-
-        ctrl = "command" if SYSTEME == "Darwin" else "ctrl"
-        ancien_presse_papier = _lire_presse_papier()
-        try:
-            pyautogui.hotkey(ctrl, "k")  # recherche rapide de Discord
-            time.sleep(0.8)
-            _coller(pseudo, ctrl)
-            time.sleep(1.5)
-            pyautogui.press("enter")
-            time.sleep(1.5)
-            _coller(message, ctrl)
-            time.sleep(0.3)
-            pyautogui.press("enter")
-        finally:
-            _ecrire_presse_papier(ancien_presse_papier)
-        return f"Message tapé et envoyé dans la conversation Discord « {pseudo} »."
+        self.interface.etat("action", f"Message Discord pour {destinataire}")
+        if reglages.get("methode", "clavier") == "bot":
+            return _discord_par_bot(reglages, destinataire, message)
+        return _discord_par_clavier(reglages, destinataire, message)
 
     # ---------------------------------------------------------------- divers
 
@@ -294,20 +293,108 @@ def _chercher_raccourci_windows(nom: str) -> Path | None:
     return raccourcis[contient[0]] if contient else None
 
 
-def _mettre_au_premier_plan(titre: str) -> None:
+def _discord_par_clavier(reglages: dict, destinataire: str, message: str) -> str:
+    """Tape le message dans l'appli Discord comme un humain, puis rend la main à la
+    fenêtre que tu utilisais (environ 3 secondes d'interruption)."""
+    import pyautogui
+
+    pseudo = reglages["contacts"].get(destinataire.lower().strip(), destinataire)
+    fenetre_precedente = _fenetre_active()
+    if not _activer_fenetre("Discord"):
+        _lancer("discord://")
+        time.sleep(reglages.get("delai_ouverture", 4))
+        _activer_fenetre("Discord")
+
+    ctrl = "command" if SYSTEME == "Darwin" else "ctrl"
+    ancien_presse_papier = _lire_presse_papier()
+    try:
+        pyautogui.hotkey(ctrl, "k")  # recherche rapide de Discord
+        time.sleep(0.6)
+        _coller(pseudo, ctrl)
+        time.sleep(1.2)
+        pyautogui.press("enter")
+        time.sleep(1.0)
+        _coller(message, ctrl)
+        time.sleep(0.2)
+        pyautogui.press("enter")
+        time.sleep(0.2)
+    finally:
+        _ecrire_presse_papier(ancien_presse_papier)
+        if fenetre_precedente is not None:
+            try:
+                fenetre_precedente.activate()
+            except Exception:
+                pass
+    return f"Message tapé et envoyé dans la conversation Discord « {pseudo} »."
+
+
+def _discord_par_bot(reglages: dict, destinataire: str, message: str) -> str:
+    """Envoie le message en message privé via un bot Discord : rien ne s'affiche à
+    l'écran, le clavier n'est pas touché. Le message vient du bot, pas de ton compte."""
+    import json
+    import urllib.error
+    import urllib.request
+
+    jeton = os.environ.get("DISCORD_BOT_TOKEN")
+    if not jeton:
+        return "Erreur : DISCORD_BOT_TOKEN manquant dans le fichier .env."
+    identifiant = reglages.get("ids_bot", {}).get(destinataire.lower().strip())
+    if not identifiant:
+        return (f"Erreur : pas d'identifiant Discord pour « {destinataire} ». L'utilisateur doit "
+                "l'ajouter dans config.toml, section [discord.ids_bot].")
+
+    def appel(chemin: str, donnees: dict) -> dict:
+        requete = urllib.request.Request(
+            f"https://discord.com/api/v10{chemin}", data=json.dumps(donnees).encode(), method="POST",
+            headers={"Authorization": f"Bot {jeton}", "Content-Type": "application/json",
+                     "User-Agent": "DiscordBot (https://github.com/stonetheking/jarvis, 1.0)"})
+        with urllib.request.urlopen(requete, timeout=10) as reponse:
+            return json.load(reponse)
+
+    try:
+        salon = appel("/users/@me/channels", {"recipient_id": str(identifiant)})
+        appel(f"/channels/{salon['id']}/messages", {"content": message})
+    except urllib.error.HTTPError as e:
+        return (f"Erreur Discord {e.code} : {e.read().decode(errors='ignore')[:200]}. "
+                "Le destinataire doit partager un serveur avec le bot et accepter ses messages privés.")
+    return f"Message envoyé à {destinataire} par le bot Discord."
+
+
+def _fenetre_active():
     if SYSTEME != "Windows":
-        return
+        return None
+    try:
+        import pygetwindow
+
+        return pygetwindow.getActiveWindow()
+    except Exception:
+        return None
+
+
+def _activer_fenetre(titre: str) -> bool:
+    """Met au premier plan la fenêtre dont le titre se termine par `titre`, si elle existe."""
+    if SYSTEME != "Windows":
+        return False
     try:
         import pygetwindow
 
         fenetres = [w for w in pygetwindow.getWindowsWithTitle(titre) if w.title.endswith(titre)]
-        if fenetres:
-            if fenetres[0].isMinimized:
-                fenetres[0].restore()
+        if not fenetres:
+            return False
+        if fenetres[0].isMinimized:
+            fenetres[0].restore()
+        try:
             fenetres[0].activate()
-            time.sleep(0.5)
+        except Exception:
+            # Windows refuse parfois de changer de fenêtre active : un appui sur Alt débloque.
+            import pyautogui
+
+            pyautogui.press("alt")
+            fenetres[0].activate()
+        time.sleep(0.4)
+        return True
     except Exception:
-        pass  # Discord s'ouvre de toute façon au premier plan via discord://
+        return False
 
 
 def _coller(texte: str, ctrl: str) -> None:

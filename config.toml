@@ -1,0 +1,95 @@
+# ============================================================
+#  Configuration de Jarvis
+#  Modifie ce fichier librement, puis relance Jarvis.
+# ============================================================
+
+[general]
+# Le prénom auquel Jarvis réagit (en minuscules).
+mot_de_reveil = "jarvis"
+# Autres façons dont la reconnaissance vocale peut mal écrire le prénom.
+variantes_mot_de_reveil = ["jarvice", "jarviss", "jarvisse", "djarvis", "jarvi"]
+# Comment Jarvis t'appelle.
+nom_utilisateur = "Monsieur"
+# Après une réponse, Jarvis continue d'écouter quelques secondes sans
+# qu'il faille redire son prénom (pratique pour enchaîner une discussion).
+secondes_de_suivi = 8
+# Au-delà de ce délai sans échange, Jarvis oublie la conversation en cours.
+minutes_avant_oubli = 10
+
+[cerveau]
+# Modèle Claude utilisé.
+#  - "claude-opus-5-5"  : le plus intelligent (~1 à 2 centimes par commande)
+#  - "claude-haiku-5-5" : environ 40 fois moins cher, largement suffisant
+#                         pour ouvrir des applis / envoyer des messages
+modele = "claude-opus-5-5"
+# "low" = réponses rapides et économiques. "medium" ou "high" = plus réfléchi.
+effort = "low"
+# Autorise Jarvis à chercher sur internet (météo, actualités...).
+# Coûte environ 1 centime par recherche.
+recherche_web = true
+
+[voix]
+# Voix Microsoft Edge (gratuite, nécessite internet). Autres voix françaises :
+# "fr-FR-DeniseNeural", "fr-FR-EloiseNeural", "fr-FR-RemyMultilingualNeural",
+# "fr-CA-AntoineNeural", "fr-BE-GerardNeural", "fr-CH-FabriceNeural"
+voix_edge = "fr-FR-HenriNeural"
+# Vitesse de parole, ex. "+10%" ou "-5%".
+vitesse = "+5%"
+
+[ecoute]
+# Comment Jarvis détecte qu'on l'appelle :
+#  - "google"     : tu dis juste « Jarvis, ... ». Ce que capte le micro est envoyé
+#                   à la reconnaissance vocale de Google en continu.
+#  - "hors_ligne" : tu dis « Hey Jarvis » ; la détection se fait sur ton PC et
+#                   rien ne part sur internet avant. (pip install openwakeword)
+mode_reveil = "google"
+# Langue de la reconnaissance vocale.
+langue = "fr-FR"
+# Index du micro à utiliser (laisse -1 pour le micro par défaut).
+# Lance `python -m jarvis --micros` pour voir la liste.
+index_micro = -1
+
+[discord]
+# Demande une confirmation vocale ("Je l'envoie ?") avant d'envoyer un message.
+confirmer_avant_envoi = true
+# Secondes d'attente pour que Discord s'ouvre / passe au premier plan.
+delai_ouverture = 4
+
+# Surnoms -> nom à taper dans la recherche Discord (Ctrl+K).
+# Mets le pseudo Discord exact, ou le nom du serveur/salon.
+[discord.contacts]
+charles = "charles"
+# maman = "maman_du_75"
+
+# Applications que Jarvis sait ouvrir : nom prononcé -> commande / lien.
+# Sous Windows, un lien comme "discord://" ou "spotify:" lance l'appli installée.
+# Tu peux aussi mettre un chemin complet vers un .exe entre guillemets.
+[applications]
+discord = "discord://"
+spotify = "spotify:"
+steam = "steam://open/main"
+"bloc-notes" = "notepad"
+calculatrice = "calc"
+explorateur = "explorer"
+paint = "mspaint"
+chrome = "chrome"
+"google chrome" = "chrome"
+firefox = "firefox"
+edge = "msedge"
+"visual studio code" = "code"
+vscode = "code"
+word = "winword"
+excel = "excel"
+powerpoint = "powerpnt"
+"gestionnaire des tâches" = "taskmgr"
+"paramètres" = "ms-settings:"
+# "league of legends" = 'C:\Riot Games\Riot Client\RiotClientServices.exe'
+
+# Sites que Jarvis sait ouvrir par leur nom.
+[sites]
+youtube = "https://www.youtube.com"
+gmail = "https://mail.google.com"
+netflix = "https://www.netflix.com"
+twitch = "https://www.twitch.tv"
+chatgpt = "https://chatgpt.com"
+"google maps" = "https://maps.google.com"

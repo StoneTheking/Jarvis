@@ -41,6 +41,8 @@ def demarrer(config, args, interface, prenom, appel, hors_ligne) -> None:
     interface.etat("reflexion", "Démarrage…")
     voix = Voix(config, interface, muet=args.muet)
     oreille = Clavier() if args.texte else Oreille(config)
+    if isinstance(oreille, Oreille):
+        voix.apres_parler = interface.apres_son = oreille.micro.vider
     actions = Actions(config, voix, oreille, interface)
     if config["cerveau"].get("fournisseur", "api") == "abonnement":
         from .cerveau_abonnement import CerveauAbonnement
@@ -53,7 +55,7 @@ def demarrer(config, args, interface, prenom, appel, hors_ligne) -> None:
     if hors_ligne:
         from .reveil import ReveilHorsLigne
 
-        reveil = ReveilHorsLigne(config)
+        reveil = ReveilHorsLigne()
 
     if args.texte:
         print("⌨️  Mode texte : écris directement ta demande (Ctrl+C pour quitter).")
@@ -75,7 +77,7 @@ def attendre_commande(oreille, voix, detecteur, reveil, interface, mode_texte: b
     if mode_texte:
         return oreille.ecouter()
     if reveil:
-        reveil.attendre()
+        reveil.attendre(oreille.micro)
         return ecouter_commande(oreille, interface)
 
     phrase = oreille.ecouter()

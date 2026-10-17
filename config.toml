@@ -78,8 +78,11 @@ langue = "fr-FR"
 # Index du micro à utiliser (laisse -1 pour le micro par défaut).
 # Lance `lancer_jarvis.bat --micros` pour voir la liste.
 index_micro = -1
+# Secondes de silence avant que Jarvis considère que tu as fini ta phrase.
+# Augmente (2, 2.5...) s'il te coupe encore ; baisse (1.2) pour qu'il réponde plus vite.
+pause_fin_de_phrase = 1.6
 # Augmente (1.5, 2...) si Jarvis réagit aux bruits de fond ; baisse (0.7...)
-# s'il ne t'entend pas bien.
+# s'il ne t'entend pas bien ou coupe la fin de tes phrases.
 sensibilite_micro = 1.0
 
 [interface]

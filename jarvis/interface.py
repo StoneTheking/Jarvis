@@ -19,6 +19,7 @@ class Interface:
         self.sons = sons
         self.astuce_veille = astuce_veille
         self._file = queue.Queue()
+        self.apres_son = lambda: None  # branché sur le micro pour qu'il n'entende pas le bip
 
     # ------------------------------------------------------------ appelé par Jarvis
 
@@ -43,7 +44,8 @@ class Interface:
                 enveloppe = np.minimum(1, np.minimum(t, 0.07 - t) * 200)  # évite les « clics »
                 sons.append(0.25 * np.sin(2 * np.pi * frequence * t) * enveloppe)
             sd.play(np.concatenate(sons).astype(np.float32), taux)
-            sd.wait()  # sinon le micro capterait le bip
+            sd.wait()
+            self.apres_son()
         except Exception:
             pass
 

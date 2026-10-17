@@ -22,6 +22,7 @@ class Voix:
         self.interface = interface
         self.muet = muet
         self._moteur_hors_ligne = None
+        self.apres_parler = lambda: None  # branché sur le micro pour qu'il ne s'entende pas
         if not muet:
             import pygame
 
@@ -53,6 +54,7 @@ class Voix:
             self._dire_hors_ligne(sans_balises)
         finally:
             os.remove(chemin)
+            self.apres_parler()
 
     def _generer_edge(self, texte: str, chemin: str) -> None:
         import edge_tts

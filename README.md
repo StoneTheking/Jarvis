@@ -64,6 +64,7 @@ Si Jarvis a mal compris, la bulle te montre ce qu'il a entendu : pratique pour r
 
 **Il comprend mal ?**
 - Jarvis utilise **Whisper**, qui tourne sur ton PC. Au premier lancement, il télécharge environ 500 Mo. Pour encore plus de précision : `modele_whisper = "medium"` (plus lent).
+- Whisper n'existe pas encore pour **Python 3.15**. Si l'installation affiche « Whisper n'est pas encore disponible », Jarvis utilise Google, qui se trompe plus souvent. Pour avoir Whisper, installe aussi **Python 3.13** (https://www.python.org/downloads/, garde ton 3.15), puis relance `installer.bat` : il choisira tout seul la bonne version.
 - Parle normalement, sans faire de pause entre « Jarvis » et ta demande.
 - S'il réagit aux bruits de fond : `sensibilite_micro = 1.5`. S'il ne t'entend pas : `0.7`.
 - Mauvais micro ? `lancer_jarvis.bat --micros`, puis mets le bon numéro dans `index_micro`.

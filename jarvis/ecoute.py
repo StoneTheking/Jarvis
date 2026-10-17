@@ -28,7 +28,11 @@ class Oreille:
         self.reco.pause_threshold = 1.0  # silence qui marque la fin d'une phrase (secondes)
         self.reco.non_speaking_duration = 0.4
         if self.moteur == "whisper":
-            self._charger_whisper(e.get("modele_whisper", "small"), config)
+            try:
+                self._charger_whisper(e.get("modele_whisper", "small"), config)
+            except ImportError:
+                print("⚠️  Whisper n'est pas installé (voir le README) : j'utilise la reconnaissance de Google.")
+                self.moteur = "google"
         print("🎙️  Calibrage du micro (reste silencieux 1 seconde)...")
         with self.micro as source:
             self.reco.adjust_for_ambient_noise(source, duration=1)

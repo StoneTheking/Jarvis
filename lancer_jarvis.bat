@@ -1,5 +1,10 @@
 @echo off
 cd /d "%~dp0"
-call .venv\Scripts\activate.bat
-python -m jarvis %*
+set PYTHONUTF8=1
+if not exist .venv\Scripts\python.exe (
+    echo Jarvis n'est pas encore installe : lancement de l'installation...
+    call installer.bat
+    if not exist .venv\Scripts\python.exe exit /b 1
+)
+.venv\Scripts\python.exe -m jarvis %*
 pause

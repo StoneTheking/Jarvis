@@ -2,9 +2,10 @@ anthropic>=1.15
 claude-agent-sdk>=0.2
 python-dotenv>=1.0
 SpeechRecognition>=3.10
-PyAudio>=0.2.14
+sounddevice>=0.4.6
+numpy
 edge-tts>=6.1
-pygame>=2.5
+pygame-ce>=2.5
 pyttsx3>=2.90
 pyautogui>=0.9.54
 pyperclip>=1.8

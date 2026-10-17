@@ -3,8 +3,6 @@
 import argparse
 import re
 
-import anthropic
-
 from .actions import Actions
 from .cerveau import Cerveau
 from .config import charger_config
@@ -86,18 +84,8 @@ def converser(commande: str, cerveau, oreille, voix, detecteur, config) -> None:
             return
         try:
             voix.dire(cerveau.repondre(commande) or "C'est fait.")
-        except anthropic.AuthenticationError:
-            voix.dire("Ma clé d'accès à Claude est invalide. Vérifiez le fichier point env.")
-            return
-        except anthropic.APIConnectionError:
-            voix.dire("Je n'arrive pas à me connecter à internet.")
-            return
-        except anthropic.RateLimitError:
-            voix.dire("Je suis un peu débordé, réessayez dans une minute.")
-            return
-        except anthropic.APIStatusError as e:
-            print(f"⚠️  Erreur API {e.status_code} : {e.message}")
-            voix.dire("J'ai rencontré un problème technique.")
+        except Exception as e:
+            voix.dire(message_erreur(e))
             return
 
         suite = oreille.ecouter(attente_max=config["general"]["secondes_de_suivi"])
@@ -105,6 +93,21 @@ def converser(commande: str, cerveau, oreille, voix, detecteur, config) -> None:
             sans_prenom = detecteur.extraire(suite)
             suite = suite if sans_prenom is None else sans_prenom
         commande = suite
+
+
+def message_erreur(e: Exception) -> str:
+    print(f"⚠️  {type(e).__name__} : {e}")
+    try:
+        import anthropic
+    except ImportError:
+        return "J'ai rencontré un problème technique."
+    if isinstance(e, anthropic.AuthenticationError):
+        return "Ma clé d'accès à Claude est invalide. Vérifiez le fichier point env."
+    if isinstance(e, anthropic.APIConnectionError):
+        return "Je n'arrive pas à me connecter à internet."
+    if isinstance(e, anthropic.RateLimitError):
+        return "Je suis un peu débordé, réessayez dans une minute."
+    return "J'ai rencontré un problème technique."
 
 
 if __name__ == "__main__":

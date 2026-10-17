@@ -12,7 +12,7 @@ class Oreille:
         self.sr = sr
         self.langue = config["ecoute"]["langue"]
         index = config["ecoute"]["index_micro"]
-        self.micro = sr.Microphone(device_index=None if index < 0 else index)
+        self.micro = Micro(sr, None if index < 0 else index)
         self.reco = sr.Recognizer()
         self.reco.dynamic_energy_threshold = True
         self.reco.pause_threshold = 0.8
@@ -66,8 +66,45 @@ class DetecteurPrenom:
         return re.sub(r"\s+", " ", commande).strip(" ,.!?:;")
 
 
-def lister_micros() -> None:
-    import speech_recognition as sr
+def Micro(sr, index: int | None):
+    """Micro pour speech_recognition, basé sur sounddevice (pas besoin de PyAudio,
+    qui ne s'installe pas sur les versions récentes de Python)."""
 
-    for i, nom in enumerate(sr.Microphone.list_microphone_names()):
-        print(f"[{i}] {nom}")
+    class _Flux:
+        def __init__(self, flux):
+            self.flux = flux
+
+        def read(self, n: int) -> bytes:
+            donnees, _ = self.flux.read(n)
+            return bytes(donnees)
+
+    class _Micro(sr.AudioSource):
+        def __init__(self):
+            self.SAMPLE_RATE = 16000
+            self.SAMPLE_WIDTH = 2
+            self.CHUNK = 1024
+            self.stream = None
+
+        def __enter__(self):
+            import sounddevice as sd
+
+            flux = sd.RawInputStream(samplerate=self.SAMPLE_RATE, blocksize=self.CHUNK,
+                                     device=index, channels=1, dtype="int16")
+            flux.start()
+            self.stream = _Flux(flux)
+            return self
+
+        def __exit__(self, *_):
+            self.stream.flux.stop()
+            self.stream.flux.close()
+            self.stream = None
+
+    return _Micro()
+
+
+def lister_micros() -> None:
+    import sounddevice as sd
+
+    for i, appareil in enumerate(sd.query_devices()):
+        if appareil["max_input_channels"] > 0:
+            print(f"[{i}] {appareil['name']}")

@@ -47,6 +47,10 @@ Par défaut, Jarvis utilise **ton abonnement Claude** via Claude Code (`fourniss
 
 Si un jour tu veux plus de rapidité, tu peux passer en `fournisseur = "api"` avec une clé API (https://console.anthropic.com/settings/keys) collée dans le fichier `.env` (copie `.env.example`). C'est facturé à l'usage, moins de 0,1 centime par demande avec Haiku.
 
+## Mettre à jour Jarvis
+
+Double-clique sur **`mettre_a_jour.bat`** : il télécharge la dernière version, garde ton fichier `.env` et tes modules installés, et sauvegarde ta config actuelle dans `config.ancien.toml` (recopie tes contacts et applis perso dans le nouveau `config.toml`).
+
 ## Savoir si Jarvis t'écoute
 
 Une petite **bulle** reste en bas de l'écran (déplaçable à la souris, clic droit → *Quitter Jarvis*) :
